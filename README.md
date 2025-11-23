@@ -1,110 +1,77 @@
-# 🛒 MicroCheckout – Sistema de Checkout com ESP32 + Interface Web
+# MicroCheckout – Sistema de Checkout Autônomo com Arduino + RFID
 
-**MicroCheckout** é um projeto que simula um sistema de ponto de venda (PDV), evoluindo do Arduino para **ESP32**, integrando hardware físico com uma **interface web** via API. Ele utiliza **ESP32**, **tela OLED**, **sensor RFID**, **buzzer** e **LEDs** para registrar e exibir transações de produtos, enquanto **toda a gestão (remoção, finalização, relatórios) é feita via web**.
+**MicroCheckout** é um sistema físico de ponto de venda (PDV) que simula o autoatendimento de um supermercado, funcionando **100% offline e sem computador**.  
+O cliente adiciona/remoe produtos apenas passando tags RFID, vê o subtotal em tempo real no display LCD e finaliza a compra com um cartão RFID de pagamento.
 
----
+Perfeito para feiras de ciências, projetos makers ou como base para um PDV real de baixo custo.
 
-## 🎯 Objetivo
+## Objetivo do Projeto
 
-Criar um sistema de checkout funcional com:
+Criar um checkout simples, robusto e totalmente independente utilizando apenas componentes comuns de Arduino.
 
-- Registro de produtos via **sensor RFID**  
-- Exibição de informações críticas em **OLED** (hora, status, total)  
-- Integração em tempo real com uma **interface web** via API  
-- Feedback sonoro com **buzzer** e visual com **LEDs**  
-- Toda a gestão das transações (remoção de itens, finalização da compra) feita **exclusivamente via interface web**
+## Componentes Utilizados
 
----
+| Componente                  | Função                                      |
+|-----------------------------|---------------------------------------------|
+| Arduino Uno / Nano          | Microcontrolador principal                  |
+| Módulo RFID RC522           | Leitura de tags e cartão de pagamento       |
+| Display LCD 16x2 com I2C    | Exibe subtotal e mensagens                  |
+| 2x Botões push-button       | Modo remoção e Finalizar compra             |
+| LED Verde + resistor        | Feedback de adição                          |
+| LED Vermelho + resistor     | Feedback de remoção/erro                    |
+| Buzzer ativo ou passivo     | Feedback sonoro                             |
+| Bateria 12V + regulador     | Alimentação independente (opcional)         |
 
-## 🧰 Componentes Utilizados
+## Como Funciona
 
-| Componente           | Função                                      |
-|----------------------|--------------------------------------------|
-| ESP32                | Microcontrolador principal                  |
-| Sensor RFID          | Leitura de códigos de produtos             |
-| Tela OLED 128x64     | Exibição de informações críticas           |
-| Buzzer               | Feedback sonoro das transações             |
-| LEDs (verde/vermelho)| Indicação de sucesso/erro                   |
-| Protoboard e jumpers | Montagem física                             |
+### Modo Adição (padrão)
+- Passe a tag do produto → item adicionado
+- LED verde pisca + beep curto
+- Subtotal atualizado instantaneamente
 
----
+### Modo Remoção
+- Pressione **Botão 1** → entra no modo remoção
+- Passe a tag → item removido
+- LED vermelho pisca + beep curto
 
-## 🛠 Funcionalidades Atuais
+### Finalizar Compra
+- Pressione **Botão 2** → exibe total e pede cartão
+- Passe o cartão RFID especial → pagamento confirmado
+  - Beep duplo + LED verde fixo
+- Cartão errado → beep longo + LED vermelho
 
-- Leitura de **produtos via RFID**  
-- Exibição de **nome, preço, total e hora** na tela OLED  
-- Integração com **API web** para envio de transações em tempo real  
-- Feedback visual (LEDs) e sonoro (buzzer) para cada ação no ESP32  
-- Todas as operações de **remoção de itens ou finalização de compra** são feitas via **interface web**
+Após pagamento o carrinho é zerado automaticamente.
 
----
+## Feedbacks
 
-## 💡 Fluxo de Funcionamento
+| Ação                    | LED           | Buzzer            | LCD                          |
+|-------------------------|---------------|-------------------|------------------------------|
+| Produto adicionado      | Verde pisca   | Beep curto        | Subtotal atualizado          |
+| Produto removido        | Vermelho pisca| Beep curto        | Subtotal atualizado          |
+| Tag desconhecida        | Vermelho      | Beep longo        | "Produto nao cadastrado"     |
+| Pagamento OK            | Verde fixo    | Beep duplo        | "Obrigado! Volte sempre :)"  |
+| Cartão errado           | Vermelho      | Beep longo        | "Cartao invalido"            |
 
-1. Inicie o ESP32 e conecte à rede Wi-Fi.  
-2. Passe o **cartão RFID** do produto.  
-3. O sistema identifica o produto e exibe **nome, preço e total** na OLED.  
-4. A transação é enviada para a **interface web** via API.  
-5. LEDs e buzzer indicam sucesso ou erro da operação.  
-6. Na web, o usuário pode **remover produtos ou finalizar a compra**, que atualizará o total no ESP32 em tempo real.
 
----
+## Principais funções:
 
-## 📁 Estrutura do Código (ESP32)
+- lerTagRFID()
+- adicionarProduto()
+- removerProduto()
+- atualizarLCD()
+- finalizarCompra()
+- feedbackBuzzerLED()
 
-```c
-struct Produto {
-  String rfid;
-  const char* nome;
-  float preco;
-};
+## Possíveis Melhorias
 
-// Lista de produtos cadastrados
-Produto produtos[] = {
-  {"A1B2C3D4", "Sabonete", 3.50},
-  {"E5F6G7H8", "Arroz 5kg", 22.90},
-  {"I9J0K1L2", "Leite 1L", 4.20},
-  // ... adicione mais produtos
-};
+ - Cadastro de produtos via serial ou cartão admin (sem recompilar)
+ - Impressora térmica 58mm para cupom
+ - Modo administrador com cartão especial
+ - Salvar histórico de vendas na EEPROM ou cartão SD
+ - Display OLED ou TFT com mais informações
+ - Suporte a múltiplos cartões de pagamento
+ - Interface web via ESP8266/ESP32 (versão avançada)
 
-// Funções principais
-// - leituraRFID()
-// - atualizarOLED()
-// - enviarAPI()
-// - feedbackBuzzerLED()
-```
+## Licença
 
----
-
-## 🌐 Integração Web
-
-O ESP32 envia as transações para uma **API REST**, que gerencia os registros em tempo real.  
-Na interface web, é possível:
-
-- Visualizar o **total da compra**  
-- **Remover itens** antes da finalização  
-- **Finalizar a compra**, zerando o total no ESP32  
-- Acompanhar histórico de transações e status do dispositivo
-
----
-
-## 🔜 Próximos Passos
-
-- Expandir a lista de produtos RFID  
-- Implementar autenticação de dispositivo via API  
-- Criar dashboard web responsivo em **React** ou **Vue**  
-- Adicionar relatórios de vendas e estatísticas em tempo real  
-- Otimizar feedback OLED e sonoro para maior clareza
-
----
-
-## 🤝 Contribuição
-
-Contribuições são bem-vindas!  
-Sinta-se à vontade para abrir **issues** ou enviar **pull requests**.
-
----
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+Este projeto está licenciado sob a MIT License – veja o arquivo LICENSE para detalhes.
